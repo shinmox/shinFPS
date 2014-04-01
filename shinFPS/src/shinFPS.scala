@@ -110,6 +110,8 @@ class shinFPS extends SimpleApplication {
         }
         def InitWorld() {
             def InitBlocks() {
+                val xmax = Math.sqrt(NombreCube).toInt
+
                 def CreateBlocks() {
                     val mat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md")
                     mat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/Terrain/Pond/Pond.jpg"))
@@ -127,7 +129,6 @@ class shinFPS extends SimpleApplication {
                     }
                 }
                 def MoveBlocks() {
-                    val xmax = Math.sqrt(NombreCube).toInt
                     for (i <- 0 until xmax) {
                         for (j <- 0 until xmax) {
                             rocks(i * xmax + j).move(i * 2, 2.5f, j * 2)
@@ -142,15 +143,49 @@ class shinFPS extends SimpleApplication {
                         bulletAppState.getPhysicsSpace.add(rockControls(i))
                     }
                 }
-                def RemoveEniZoneBlocks() {
+                def RemoveZones() {
+                    def RemoveEniZoneBlocks() {
+                        // On retire une zone de 2*3 blocks comme zone d'apparition des mobs (ennemis)
+                        val listSuppression: List[Int] =    // Numeros des blocks à retirer
+                            List(
+                                (xmax * (xmax -0.5f) -1).toInt,
+                                (xmax * (xmax -0.5f)).toInt,
+                                (xmax * (xmax -0.5f) +1).toInt,
 
+                                (xmax * (xmax -1 -0.5f) -1).toInt,
+                                (xmax * (xmax -1 -0.5f)).toInt,
+                                (xmax * (xmax -1 -0.5f) +1).toInt
+                            )
+                        listSuppression.foreach(RemoveBlock)
+                    }
+                    def RemoveCoeurZoneBlocks() {
+                        // On retire une zone de 3*3 blocks comme zone de cible ennemi
+                        val listSuppression: List[Int] =    // Numeros des blocks à retirer
+                            List(
+                                (xmax * 0.5f -1).toInt,
+                                (xmax * 0.5f).toInt,
+                                (xmax * 0.5f +1).toInt,
+
+                                (xmax * 1.5f -1).toInt,
+                                (xmax * 1.5f).toInt,
+                                (xmax * 1.5f +1).toInt,
+
+                                (xmax * 2.5f -1).toInt,
+                                (xmax * 2.5f).toInt,
+                                (xmax * 2.5f +1).toInt
+                            )
+                        listSuppression.foreach(RemoveBlock)
+                    }
+
+                    RemoveEniZoneBlocks()
+                    RemoveCoeurZoneBlocks()
                 }
 
                 CreateBlocks()
                 MoveBlocks()
                 CreatePhysic()
                 rocks.foreach(shootables.attachChild)
-                RemoveEniZoneBlocks()
+                RemoveZones()
 
             }
             def InitUndestructible() {
@@ -446,8 +481,7 @@ class shinFPS extends SimpleApplication {
                     val x = curseur.getWorldTranslation.getX
                     val z = curseur.getWorldTranslation.getZ
                     val i = (x/2 * Math.sqrt(NombreCube) + z/2).toInt
-                    rockControls(i).setEnabled(false)
-                    rocks(i).removeFromParent()
+                    RemoveBlock(i)
                 }
                 if (name.equals("Return") && !keyPressed) {
                     switchGamePlay()
@@ -484,6 +518,10 @@ class shinFPS extends SimpleApplication {
                 }
             }
         }
+    }
+    private def RemoveBlock(i: Int) {
+        rockControls(i).setEnabled(false)
+        rocks(i).removeFromParent()
     }
     def Affiche(mark: Geometry) {
         rootNode.attachChild(mark)
