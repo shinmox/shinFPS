@@ -7,7 +7,7 @@ import com.jme3.scene.shape.Sphere
 /**
  * Created by shinmox on 30/03/14.
  */
-class Marker(Number: Int, assetManager: AssetManager, observer: shinFPS) {
+class Marker(Number: Int, assetManager: AssetManager, observer: Ui) {
     var marks: Array[Geometry] = null
     var compteur: Int = 0
     Marker()

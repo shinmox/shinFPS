@@ -12,5 +12,5 @@ Class-Path: scala-library.jar scala-swing.jar scala-actors.jar joal.ja
  ip jMonkeyEngine3-sources.zip nifty-default-controls.jar jME3-bullet-
  natives-android.jar nifty-default-controls-javadoc.jar jME3-openal-so
  ft-natives-android.jar
-Main-Class: shinFPS
+Main-Class: ShinFPS
 
