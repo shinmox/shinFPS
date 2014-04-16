@@ -1,16 +1,3 @@
 Manifest-Version: 1.0
-Class-Path: scala-library.jar scala-swing.jar scala-actors.jar joal.ja
- r lwjgl.jar nifty.jar jinput.jar jbullet.jar retrace.jar vecmath.jar 
- xstream.jar eventbus.jar jME3-ios.jar jogl-all.jar launch4j.jar progu
- ard.jar jME3-core.jar jME3-jogg.jar jME3-jogl.jar gluegen-rt.jar j-og
- g-oggd.jar jME3-lwjgl.jar jME3-bullet.jar stack-alloc.jar jME3-androi
- d.jar jME3-blender.jar jME3-desktop.jar jME3-effects.jar jME3-jbullet
- .jar jME3-plugins.jar jME3-terrain.jar jglfont-core.jar xmlpull-xpp3.
- jar applet-loader.zip j-ogg-vorbisd.jar jME3-niftygui.jar jME3-testda
- ta.jar nifty-javadoc.jar jME3-networking.jar nifty-style-black.jar jM
- E3-lwjgl-natives.jar jME3-bullet-natives.jar jMonkeyEngine3-javadoc.z
- ip jMonkeyEngine3-sources.zip nifty-default-controls.jar jME3-bullet-
- natives-android.jar nifty-default-controls-javadoc.jar jME3-openal-so
- ft-natives-android.jar
 Main-Class: ShinFPS
 

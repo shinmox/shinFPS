@@ -40,6 +40,6 @@ class Marker(Number: Int, assetManager: AssetManager, observer: Ui) {
         val next = nextMark
         next.setLocalTranslation(position)
         observer.Affiche(next)
-        // TODO: Mettre un compteur pour faire disparaître la mark
+        // TODO: Mettre un timer pour faire disparaître la mark
     }
 }
