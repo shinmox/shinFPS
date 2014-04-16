@@ -120,7 +120,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
             }
         }
         def actionFps() {
-            if (!left && !right && !up && !down) return // pas de mouvement
+            //if (!left && !right && !up && !down) return // pas de mouvement
 
             var vitesse = 0.12f
             if (run) vitesse *= 2
@@ -139,7 +139,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
             _modele.Player.Geometry.setLocalTranslation(position)
         }
         def actionStr() {
-            if (!left && !right && !up && !down) return // pas de mouvement
+            //if (!left && !right && !up && !down) return // pas de mouvement
 
             val camDir: Vector3f = cam.getDirection.normalize().mult(0.5f)
             if (left) cam.setLocation(cam.getLocation.add(camDir.getZ, 0, -camDir.getX))
@@ -631,13 +631,14 @@ class Ui(_modele: Modele) extends SimpleApplication {
         val autour = Array.ofDim[Boolean](3, 3)
         val x = point._1
         val z = point._2
-        for (i <- -1 to +1 ;
-             j <- -1 to +1
-                if x+i >= 0
-                   && z+j >= 0
-                   && x+i < _cote
-                   && z+j < _cote ) {
-            if (_walls.Existe(x+i, z+j)) {
+        for (i <- -1 to +1 ; j <- -1 to +1) {
+            if (x + i < 0
+                || z + j < 0
+                || x + i >= _cote
+                || z + j >= _cote ) {
+                autour(i+1)(j+1) = true
+            }
+            else if (_walls.Existe(x+i, z+j)) {
                 autour(i+1)(j+1) = true
             }
             else

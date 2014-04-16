@@ -32,8 +32,11 @@ class IA(_personnages: mutable.Map[String, Personnage]) {
         }
         def UpdateVision() {
             for (personnage <- _personnages.values
-                    if personnage.isInstanceOf[Minion] )
-                RecupereVision(personnage)
+                if personnage.isInstanceOf[Minion]
+                if !personnage.EnCoursAction ) {
+                    RecupereVision(personnage)
+                    println("IA.UpdateVision : J'ai recup la vision")
+            }
         }
         def ChercheENI() {
             positionCoeur = null

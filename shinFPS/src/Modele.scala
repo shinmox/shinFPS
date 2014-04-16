@@ -91,7 +91,6 @@ class Modele {
             _ui.InitMinionDeath()
         }
         def InitAudio() {
-            /* gun shot sound is to be triggered by a mouse click. */
             _ui.InitAudio()
         }
 
@@ -211,7 +210,7 @@ class Modele {
         if (_jeuEnCours) {
             def TestEntiteMove() {
                 for (personnage <- _gestionnaireEntites.Entites.values)
-                    if (personnage.DoitBouger)
+                    if (personnage.Destination != null)
                         _ui.Move(personnage)
             }
 

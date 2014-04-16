@@ -2,6 +2,8 @@
  * Created by shinmox on 03/04/14.
  */
 object Configuration {
+
+
     //TODO: Mettre dans un fichier texte
 
 
@@ -31,6 +33,7 @@ object Configuration {
     val MinionBigForce = 3
     val MinionBigArmure: Int = 1
     val MinionBigLife: Int = 5
+    val FacteurApproximation = 0.15f
 
     // Player
     val PlayerX: Float = 0.5f
