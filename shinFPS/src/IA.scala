@@ -5,11 +5,11 @@ import scala.collection.mutable
  */
 
 /** Classe de décision de l'action des minions */
-class IA(_personnages: mutable.Map[String, Personnage]) {
+class IA(_personnages: mutable.Map[String, Personnage], _configuration: Configuration) {
     //TODO: Posséder une vision de l'AirDeJeu qui se construit au fur et à mesure de l'exploration par les minions
     //TODO: Donner des ordres à chacun des minions à chaque tour
 
-    private val _cote = Configuration.Cote
+    private val _cote = _configuration.Cote
     private val _visionDuJeu = Array.ofDim[Case](_cote, _cote)
     private var positionCoeur: (Int, Int) = null
     private var positionJoueur: (Int, Int) = null
@@ -54,13 +54,13 @@ class IA(_personnages: mutable.Map[String, Personnage]) {
                 for (personnage <- _personnages.values
                      if _jeuEnCours
                      if personnage.isInstanceOf[Minion] ) {
-                        personnage.Attaque(Configuration.CoeurName, positionCoeur)
+                        personnage.Attaque(_configuration.CoeurName, positionCoeur)
                      }
             else if (positionJoueur != null)
                 for (personnage <- _personnages.values
                      if _jeuEnCours
                      if personnage.isInstanceOf[Minion] ) {
-                        personnage.Attaque(Configuration.PlayerName, positionJoueur)
+                        personnage.Attaque(_configuration.PlayerName, positionJoueur)
                 }
             else
                 for (personnage <- _personnages.values

@@ -4,8 +4,8 @@
 
 /** Classe initialisant l'air de jeu
   * ... bien que prévu au départ pour la gérer ... */
-class AirDeJeu() {
-    private val cote = Configuration.Cote
+class AirDeJeu(_configuration: Configuration) {
+    private val cote = _configuration.Cote
 
     val Table = Array.ofDim[Case](cote, cote)
     for (i <- 0 until cote ; j <- 0 until cote) {
@@ -17,8 +17,8 @@ class AirDeJeu() {
     val demiCote: Int = if ((0.5f*cote )% 2 == 0)(0.5f*cote).toInt
                         else (0.5f*cote + 1).toInt
 
-    var PositionApparitionMinions : (Int, Float, Int) = (cote -1, Configuration.HauteurSol, demiCote-1)
-    var PositionCoeurDonjon: (Int, Float, Int) =        (1,       Configuration.HauteurSol, demiCote-1)
+    var PositionApparitionMinions : (Int, Float, Int) = (cote -1, _configuration.HauteurSol, demiCote-1)
+    var PositionCoeurDonjon: (Int, Float, Int) =        (1,       _configuration.HauteurSol, demiCote-1)
 
     private def RemoveZones() {
         //TODO : Trouver la version fonctionnelle

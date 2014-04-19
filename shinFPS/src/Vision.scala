@@ -1,8 +1,7 @@
 /**
  * Created by shinmox on 07/04/14.
  */
-class Vision {
-    val _cote = Configuration.Cote
+class Vision(_cote: Int) {
     val Cases = Array.ofDim[Case](_cote, _cote)
     for (x <- 0 until _cote ; y <- 0 until _cote) {
         Cases(x)(y) = null

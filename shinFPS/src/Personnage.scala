@@ -6,7 +6,9 @@ import com.jme3.scene.Geometry
 /**
  * Created by shinmox on 01/04/14.
  */
-class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String) extends Entite(Geometry, _modele) {
+class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
+    extends Entite(Geometry, _modele) {
+    val _configuration = _modele.Configuration
     private def _verifiFinAction() {
         val position = Geometry.getWorldTranslation
         val x = position.getX /2.0f
@@ -20,7 +22,7 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String) extends 
 
         if (Destination._2 <= Geometry.getWorldTranslation.getZ/2.0f + _facteurApproximation
             && Destination._2 >= Geometry.getWorldTranslation.getZ/2.0f - _facteurApproximation ) {
-            left = false;
+            left = false
             right = false
         }
         if (!up && !down && !right && !left) {
@@ -35,7 +37,7 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String) extends 
         _enCoursAction
     }
 
-    val _facteurApproximation = Configuration.FacteurApproximation
+    val _facteurApproximation = _configuration.FacteurApproximation
     var Armure = 0
     var Speed: Float = 0
     var DoitBouger = false
@@ -66,11 +68,11 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String) extends 
 
         println("   Je vais en (" + direction._1 + ":" + direction._2 + ")")
 
-        if      (direction._1 < 0 || x >= Configuration.Cote)   down=true
+        if      (direction._1 < 0 || x >= _configuration.Cote)   down=true
 
         else if (direction._1 > 0 || x <= 0)                    up=true
 
-        if      (direction._2 < 0 || z >= Configuration.Cote)   left=true
+        if      (direction._2 < 0 || z >= _configuration.Cote)   left=true
 
         else if (direction._2 > 0 || z <= 0)                    right=true
 

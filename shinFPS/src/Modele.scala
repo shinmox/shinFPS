@@ -11,6 +11,7 @@ import javax.naming.ldap.Control
  */
 class Modele {
     var GameType: String = "STR"
+    val Configuration = new Configuration
     val HauteurSol = Configuration.HauteurSol
     val HauteurMurs = Configuration.HauteurSol
     private var _jeuEnCours = true
@@ -20,9 +21,9 @@ class Modele {
     var Marks: Marker = null
 
     // Entites
-    val AirDeJeu = new AirDeJeu
-    private val _gestionnaireEntites: GestionnaireEntite = new GestionnaireEntite
-    private val _IA = new IA(_gestionnaireEntites.Entites)
+    val AirDeJeu = new AirDeJeu(Configuration)
+    private val _gestionnaireEntites: GestionnaireEntite = new GestionnaireEntite(Configuration)
+    private val _IA = new IA(_gestionnaireEntites.Entites, Configuration)
     private var nextPopTime: Long = Configuration.FirstPopTime
     private var nextIATime: Long = Configuration.IATime
     private var _ui: Ui = null
@@ -120,7 +121,7 @@ class Modele {
     }
     def DonneVision(nom: String): Vision = {
         //TODO: Certainement la fonction ralentissant le plus l'IA
-        val vision = new Vision
+        val vision = new Vision(Configuration.Cote)
 
         def CreCaseRien(x: Int, z: Int) {
             if (vision.Cases(x)(z) == null) {

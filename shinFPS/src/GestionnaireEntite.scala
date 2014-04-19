@@ -1,5 +1,5 @@
 import com.jme3.material.Material
-import com.jme3.math.{Vector3f, ColorRGBA}
+import com.jme3.math.ColorRGBA
 import com.jme3.scene.shape.Box
 import com.jme3.scene.Geometry
 import com.jme3.util.TangentBinormalGenerator
@@ -13,7 +13,7 @@ import com.jme3.bullet.BulletAppState
 /**
  * Created by shinmox on 01/04/14.
  */
-class GestionnaireEntite {
+class GestionnaireEntite(_configuration: Configuration) {
     val Entites = mutable.Map[String, Personnage]()
     private val _positions = mutable.Map[String, (Int, Float, Int)]()
     var CompteurMob: Int = 0
@@ -25,10 +25,10 @@ class GestionnaireEntite {
             material
         }
 
-        val nom: String = Configuration.PlayerName
+        val nom: String = _configuration.PlayerName
 
         val material = InitMaterial()
-        val box = new Box(Configuration.PlayerX, Configuration.PlayerY, Configuration.PlayerZ)
+        val box = new Box(_configuration.PlayerX, _configuration.PlayerY, _configuration.PlayerZ)
         val geometry = new Geometry(nom, box)
 
         geometry.setMaterial(material)
@@ -88,7 +88,7 @@ class GestionnaireEntite {
         // 5 -> 7 : rapide
         // 8 -> 9 : fort et lent
 
-        val nom: String = Configuration.MinionStartName + CompteurMob.toString
+        val nom: String = _configuration.MinionStartName + CompteurMob.toString
         CompteurMob += 1
 
         val material = InitMaterial(typeMinion)
@@ -106,13 +106,13 @@ class GestionnaireEntite {
         Entites(nom) = new Minion(geometry, modele, nom, material)
 
         if (typeMinion > 7) {
-            Entites(nom).Armure = Configuration.MinionBigArmure
-            Entites(nom).Force = Configuration.MinionBigForce
-            Entites(nom).Speed = Configuration.MinionBigSpeed
-            Entites(nom).PointVie = Configuration.MinionBigLife
+            Entites(nom).Armure = _configuration.MinionBigArmure
+            Entites(nom).Force = _configuration.MinionBigForce
+            Entites(nom).Speed = _configuration.MinionBigSpeed
+            Entites(nom).PointVie = _configuration.MinionBigLife
         }
         else if (typeMinion > 4) {
-            Entites(nom).Speed = Configuration.MinionSpeedQuick
+            Entites(nom).Speed = _configuration.MinionSpeedQuick
         }
 
         _positions(nom) = position
@@ -131,7 +131,7 @@ class GestionnaireEntite {
         Entites(nom).Geometry.removeFromParent()
         Entites(nom).Control.setEnabled(false)
         Entites.remove(nom)
-        if (nom.substring(0, 3) == Configuration.MinionStartName)
+        if (nom.substring(0, 3) == _configuration.MinionStartName)
             CompteurMob -= 1
     }
 

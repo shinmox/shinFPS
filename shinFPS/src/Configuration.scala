@@ -1,44 +1,78 @@
 /**
  * Created by shinmox on 03/04/14.
  */
-object Configuration {
+class Configuration {
+    var GroundName = "Shinny Rock"
+    var RockStartName = "Rock"
+    var CoeurName = "CoeurDuDonjon"
+    var MinionStartName = "mob"
+    var PlayerName = "Player"
 
-
-    //TODO: Mettre dans un fichier texte
-
-
-    // CONSTANTES
-    val GroundName = "Shinny Rock"
-    val RockStartName = "Rock"
-    val CoeurName = "CoeurDuDonjon"
-    val MinionStartName = "mob"
-    val PlayerName = "Player"
-
-    val Cote = 12
-    val HauteurMurs = 2.0f
-    val HauteurSol = 0.0f
-    val MinionGold = 3
-    val MinionDeathTime = 5f
-    val CoutMur = 3
+    var Cote = 12
+    var HauteurMurs = 2.0f
+    var HauteurSol = 0.0f
+    var MinionGold = 3
+    var MinionDeathTime = 5f
+    var CoutMur = 3
 
     // IA
-    val MaxMinions = 5
-    val IATime = 100
-    val FirstPopTime = 5000
-    val IaPointVue: Int = 63
+    var MaxMinions = 5
+    var IATime = 100
+    var FirstPopTime = 5000
+    var IaPointVue: Int = 63
 
     // IA _ Minions
-    val MinionBigSpeed: Float = 0.7f
-    val MinionSpeedQuick: Float = 1.2f
-    val MinionBigForce = 3
-    val MinionBigArmure: Int = 1
-    val MinionBigLife: Int = 5
-    val FacteurApproximation = 0.15f
+    var MinionBigSpeed: Float = 0.7f
+    var MinionSpeedQuick: Float = 1.2f
+    var MinionBigForce = 3
+    var MinionBigArmure: Int = 1
+    var MinionBigLife: Int = 5
+    var FacteurApproximation = 0.15f
 
     // Player
-    val PlayerX: Float = 0.5f
-    val PlayerY: Float = 1f
-    val PlayerZ: Float = 0.5f
-    val PlayerDegats = 2
+    var PlayerX: Float = 0.5f
+    var PlayerY: Float = 1f
+    var PlayerZ: Float = 0.5f
+    var PlayerDegats = 2
 
+    // mise à jour des valeurs par défaut depuis un fichier de configuration
+    println(System.getProperty("user.dir"))
+    val lines = scala.io.Source.fromFile("configuration")
+    for (line <- lines.getLines()) {
+        val words = line.split(" ")
+
+        //TODO : Structure très lourde
+        if(words.length > 0 && words(0) == "GroundName") GroundName = words(1)
+        else if(words.length > 0 && words(0) == "RockStartName") RockStartName = words(1)
+        else if(words.length > 0 && words(0) == "CoeurName") CoeurName = words(1)
+        else if(words.length > 0 && words(0) == "MinionStartName") MinionStartName = words(1)
+        else if(words.length > 0 && words(0) == "PlayerName") PlayerName = words(1)
+
+        else if(words.length > 0 && words(0) == "Cote") Cote = words(1).toInt
+        else if(words.length > 0 && words(0) == "HauteurMurs") HauteurMurs = words(1).toFloat
+        else if(words.length > 0 && words(0) == "HauteurSol") HauteurSol = words(1).toFloat
+        else if(words.length > 0 && words(0) == "MinionGold") MinionGold = words(1).toInt
+        else if(words.length > 0 && words(0) == "MinionDeathTime") MinionDeathTime = words(1).toFloat
+        else if(words.length > 0 && words(0) == "CoutMur") CoutMur = words(1).toInt
+
+        // IA
+        else if(words.length > 0 && words(0) == "MaxMinions") MaxMinions = words(1).toInt
+        else if(words.length > 0 && words(0) == "IATime") IATime = words(1).toInt
+        else if(words.length > 0 && words(0) == "FirstPopTime") FirstPopTime = words(1).toInt
+        else if(words.length > 0 && words(0) == "IaPointVue") IaPointVue = words(1).toInt
+
+        // IA _ Minions
+        else if(words.length > 0 && words(0) == "MinionBigSpeed") MinionBigSpeed = words(1).toFloat
+        else if(words.length > 0 && words(0) == "MinionSpeedQuick") MinionSpeedQuick = words(1).toFloat
+        else if(words.length > 0 && words(0) == "MinionBigForce") MinionBigForce = words(1).toInt
+        else if(words.length > 0 && words(0) == "MinionBigArmure") MinionBigArmure = words(1).toInt
+        else if(words.length > 0 && words(0) == "MinionBigLife") MinionBigLife = words(1).toInt
+        else if(words.length > 0 && words(0) == "FacteurApproximation") FacteurApproximation = words(1).toFloat
+
+        // Player
+        else if(words.length > 0 && words(0) == "PlayerX") PlayerX = words(1).toFloat
+        else if(words.length > 0 && words(0) == "PlayerY") PlayerY = words(1).toFloat
+        else if(words.length > 0 && words(0) == "PlayerZ") PlayerZ = words(1).toFloat
+        else if(words.length > 0 && words(0) == "PlayerDegats") PlayerDegats = words(1).toInt
+    }
 }

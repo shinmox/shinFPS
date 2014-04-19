@@ -22,37 +22,10 @@ import scala.collection.mutable
  * Created by shinmox on 01/04/14.
  */
 class Ui(_modele: Modele) extends SimpleApplication {
-    def AjouteMur(x: Int, z: Int) {
-        //TODO: Code proche d'InitBlocks
-        val mat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md")
-        mat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/Terrain/Pond/Pond.jpg"))
-        mat.setTexture("NormalMap", assetManager.loadTexture("Textures/Terrain/Pond/Pond_normal.png"))
-        mat.setBoolean("UseMaterialColors", true)
-        mat.setColor("Specular", ColorRGBA.White)
-        mat.setColor("Diffuse", ColorRGBA.Gray)
-        mat.setFloat("Shininess", 15f) // [1,128]
-
-        val hauteurSol = _hauteurSol
-        val hauteurMurs = _hauteurMurs
-
-        val box = new Box(1f, _hauteurMurs, 1f)
-        val geometry = new Geometry(Configuration.RockStartName + "_" + x.toString + "_" + z.toString, box)
-        TangentBinormalGenerator.generate(geometry)
-        geometry.setMaterial(mat)
-        geometry.move(x * 2, hauteurSol + hauteurMurs, z * 2)
-        val sceneShape: CollisionShape = CollisionShapeFactory.createMeshShape(geometry)
-
-        val control = new RigidBodyControl(sceneShape, 0)
-        geometry.addControl(control)
-        BulletAppState.getPhysicsSpace.add(control)
-        _modele.Shootables.attachChild(geometry)
-
-        _walls.Enable(x, z, geometry, control)
-    }
-
-    private val _cote = Configuration.Cote
+    val _configuration = _modele.Configuration
+    private val _cote = _configuration.Cote
     var BulletAppState: BulletAppState = null
-    private val _walls = new Walls
+    private val _walls = new Walls(_configuration)
     private var ground: Geometry = null
     private var playerCC: CharacterControl = null
     private var curseur: Geometry = null
@@ -72,8 +45,8 @@ class Ui(_modele: Modele) extends SimpleApplication {
     private var lastFrame: Long = modCurrentTime
 
     // Raccourcis
-    private val _hauteurMurs = Configuration.HauteurMurs
-    private val _hauteurSol = Configuration.HauteurSol
+    private val _hauteurMurs = _configuration.HauteurMurs
+    private val _hauteurSol = _configuration.HauteurSol
 
     def modCurrentTime = _modele.CurrentTime
     def modShootables = _modele.Shootables
@@ -199,7 +172,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
                 val box = new Box(1f, _hauteurMurs, 1f)
                 if (table(x)(y).Mur) {
 
-                    val geometry = new Geometry(Configuration.RockStartName + "_" + x.toString + "_" + y.toString, box)
+                    val geometry = new Geometry(_configuration.RockStartName + "_" + x.toString + "_" + y.toString, box)
                     TangentBinormalGenerator.generate(geometry)
                     geometry.setMaterial(mat)
                     geometry.move(x * 2, hauteurSol + hauteurMurs, y * 2)
@@ -267,7 +240,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
 
         val cote = _cote + 2
         val box = new Box(cote, 1f, cote)
-        ground = new Geometry(Configuration.GroundName, box)
+        ground = new Geometry(_configuration.GroundName, box)
         TangentBinormalGenerator.generate(ground) // for lighting effect
         ground.setMaterial(mat)
         modShootables.attachChild(ground)
@@ -345,7 +318,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
             settings.getHeight / 2 + crossHair.getLineHeight / 2, 0)
     }
     def InitPlayer() {
-        val capsuleShape = new CapsuleCollisionShape(Configuration.PlayerX, Configuration.PlayerY, 1)
+        val capsuleShape = new CapsuleCollisionShape(_configuration.PlayerX, _configuration.PlayerY, 1)
         playerCC = new CharacterControl(capsuleShape, 0.05f)
         playerCC.setJumpSpeed(0)
         playerCC.setFallSpeed(0)
@@ -535,7 +508,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
                                                                             //    and Shootables in results list.
                     if (results.size() > 1) {                               // 4. Use the results (we mark the hit object)
                         val closest: CollisionResult = results.getCollision(1)
-                        if(closest.getGeometry.getName.substring(0, 3) == Configuration.MinionStartName)
+                        if(closest.getGeometry.getName.substring(0, 3) == _configuration.MinionStartName)
                             _modele.ShootAt(closest.getGeometry.getName)
                         else
                             _modele.Marks.GiveResults(closest.getContactPoint)
@@ -667,7 +640,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
         _coeurDeath.getParticleInfluencer.setVelocityVariation(0.3f)
     }
     def InitMinionDeath() {
-        val minionDeathsLength = Configuration.MaxMinions
+        val minionDeathsLength = _configuration.MaxMinions * 2
         _minionDeaths = new Array[ParticleEmitter](minionDeathsLength)
         for(i <- 0 until minionDeathsLength) {
             _minionDeaths(i) = new ParticleEmitter("Emitter", ParticleMesh.Type.Triangle, 30)
@@ -705,7 +678,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
     def PlayMinionDeath(lieu: Vector3f) {
         _minionDeaths(_minionDeathSuivante).setLocalTranslation(lieu)
         rootNode.attachChild(_minionDeaths(_minionDeathSuivante))
-        _deathsTimer(_minionDeathSuivante) = Configuration.MinionDeathTime
+        _deathsTimer(_minionDeathSuivante) = _configuration.MinionDeathTime
 
         _minionDeathSuivante += 1
     }
@@ -713,5 +686,32 @@ class Ui(_modele: Modele) extends SimpleApplication {
     def PLayPlayerDeath() {
         _modele.KillPlayer()
         SwitchStr()
+    }
+    def AjouteMur(x: Int, z: Int) {
+        //TODO: Code proche d'InitBlocks
+        val mat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md")
+        mat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/Terrain/Pond/Pond.jpg"))
+        mat.setTexture("NormalMap", assetManager.loadTexture("Textures/Terrain/Pond/Pond_normal.png"))
+        mat.setBoolean("UseMaterialColors", true)
+        mat.setColor("Specular", ColorRGBA.White)
+        mat.setColor("Diffuse", ColorRGBA.Gray)
+        mat.setFloat("Shininess", 15f) // [1,128]
+
+        val hauteurSol = _hauteurSol
+        val hauteurMurs = _hauteurMurs
+
+        val box = new Box(1f, _hauteurMurs, 1f)
+        val geometry = new Geometry(_configuration.RockStartName + "_" + x.toString + "_" + z.toString, box)
+        TangentBinormalGenerator.generate(geometry)
+        geometry.setMaterial(mat)
+        geometry.move(x * 2, hauteurSol + hauteurMurs, z * 2)
+        val sceneShape: CollisionShape = CollisionShapeFactory.createMeshShape(geometry)
+
+        val control = new RigidBodyControl(sceneShape, 0)
+        geometry.addControl(control)
+        BulletAppState.getPhysicsSpace.add(control)
+        _modele.Shootables.attachChild(geometry)
+
+        _walls.Enable(x, z, geometry, control)
     }
 }

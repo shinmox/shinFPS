@@ -5,8 +5,8 @@ import com.jme3.scene.Geometry
 /**
  * Created by shinmox on 07/04/14.
  */
-class Walls {
-    private val _cote = Configuration.Cote
+class Walls (_configuration: Configuration) {
+    private val _cote = _configuration.Cote
     private val _walls = Array.ofDim[Wall](_cote, _cote)
 
     def Enable(x: Int, y: Int, geometry: Geometry, control: RigidBodyControl) {
