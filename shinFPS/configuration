@@ -1,0 +1,34 @@
+Configuration
+
+GroundName Shinny_Rock
+RockStartName Rock
+CoeurName CoeurDuDonjon
+MinionStartName mob
+PlayerName Player
+
+Cote 20
+HauteurMurs 2.0
+HauteurSol 0.0
+MinionGold 3
+MinionDeathTime 5
+CoutMur 3
+
+// IA
+MaxMinions 5
+IATime 100
+FirstPopTime 5000
+IaPointVue 63
+
+// IA_Minions
+MinionBigSpeed 0.7
+MinionSpeedQuick 1.2
+MinionBigForce 3
+MinionBigArmure 1
+MinionBigLife 5
+FacteurApproximation 0.15
+
+// Player
+PlayerX 0.5
+PlayerY 1
+PlayerZ 0.5
+PlayerDegats 2
