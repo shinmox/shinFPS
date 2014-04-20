@@ -152,10 +152,7 @@ class Modele {
 
         text += _gestionnaireEntites.CompteurMob + "\n\n"
         text += Player.Gold + "\n"
-        text += Player.PointVie + "\n"
-        //        text += "(" + (Player.Geometry.getWorldTranslation.getX /2.0f).toString.substring(0,3) +
-        //            "," + (Player.Geometry.getWorldTranslation.getY /2.0f).toString.substring(0,3) +
-        //            "," + (Player.Geometry.getWorldTranslation.getZ /2.0f).toString.substring(0,3) + ")\n"
+        text += Player.PointVie
         text
     }
 

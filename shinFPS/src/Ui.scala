@@ -71,6 +71,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
     // Audio
     private var _audio: Audio = null
 
+    // Mecanique de jeu
     def simpleInitApp() {
         _modele.Init()
     }
@@ -362,10 +363,9 @@ class Ui(_modele: Modele) extends SimpleApplication {
         _textZone.setSize(guiFont.getCharSet.getRenderedSize)
         _textZone.setColor(ColorRGBA.Green)
         _textZone.setText("resistance du Coeur du donjon :\n" +
-                          "Bad minions dans le chateau :\n\n" +
+                          "Bad minions dans le Donjon :\n\n" +
                           "Or :\n" +
-                          "Player life\n" +
-                          "Player position"
+                          "Player life"
         )
         _textZone.setLocalTranslation(10, settings.getHeight-10, 0)
         guiNode.attachChild(_textZone)
