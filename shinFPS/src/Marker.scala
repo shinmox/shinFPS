@@ -28,7 +28,6 @@ class Marker(Number: Int, assetManager: AssetManager, observer: Ui) {
         }
         compteur = -1
     }
-
     def GiveResults(position: Vector3f) {
         def nextMark: Geometry = {
             if (compteur == Number - 1)     // On est au max

@@ -7,8 +7,6 @@ import scala.collection.mutable
 /** Classe de décision de l'action des minions */
 class IA(_personnages: mutable.Map[String, Personnage], _configuration: Configuration) {
     //TODO: Posséder une vision de l'AirDeJeu qui se construit au fur et à mesure de l'exploration par les minions
-    //TODO: Donner des ordres à chacun des minions à chaque tour
-
     private val _cote = _configuration.Cote
     private val _visionDuJeu = Array.ofDim[Case](_cote, _cote)
     private var positionCoeur: (Int, Int) = null
@@ -35,7 +33,6 @@ class IA(_personnages: mutable.Map[String, Personnage], _configuration: Configur
                 if personnage.isInstanceOf[Minion]
                 if !personnage.EnCoursAction ) {
                     RecupereVision(personnage)
-                    println("IA.UpdateVision : J'ai recup la vision")
             }
         }
         def ChercheENI() {
@@ -72,7 +69,6 @@ class IA(_personnages: mutable.Map[String, Personnage], _configuration: Configur
 
         for (i <- 0 until _visionDuJeu.length ; j <- 0 until _visionDuJeu.length) {
             if (_visionDuJeu(i)(j) != null && _visionDuJeu(i)(j).Joueur) {
-                println("je te vois toujours ^^ en " + i + " " + j)
             }
         }
 

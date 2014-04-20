@@ -7,6 +7,7 @@ class Vision(_cote: Int) {
         Cases(x)(y) = null
     }
 
+    // HELPER
     def _printTable() {
 
         print("X  ")
@@ -37,5 +38,4 @@ class Vision(_cote: Int) {
         }
         println("")
     }
-
 }

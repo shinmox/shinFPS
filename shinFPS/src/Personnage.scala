@@ -8,82 +8,30 @@ import com.jme3.scene.Geometry
  */
 class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
     extends Entite(Geometry, _modele) {
-    val _configuration = _modele.Configuration
-    private def _verifiFinAction() {
-        val position = Geometry.getWorldTranslation
-        val x = position.getX /2.0f
-        val z = position.getZ /2.0f
-        println(Nom + " : je suis en (" + x + " : " + z + ")")
-        if (Destination == null) return
-        if (Destination._1 <= Geometry.getWorldTranslation.getX/2.0f + _facteurApproximation
-                 && Destination._1 >= Geometry.getWorldTranslation.getX/2.0f - _facteurApproximation ) {
-            up=false ; down=false
-        }
 
-        if (Destination._2 <= Geometry.getWorldTranslation.getZ/2.0f + _facteurApproximation
-            && Destination._2 >= Geometry.getWorldTranslation.getZ/2.0f - _facteurApproximation ) {
-            left = false
-            right = false
-        }
-        if (!up && !down && !right && !left) {
-            _enCoursAction = false
-            Destination = null
-        }
-        println(Nom + " : je suis à destination, je m'arrête")
-    }
-
-    def EnCoursAction(): Boolean = {
-        _verifiFinAction()
-        _enCoursAction
-    }
-
-    val _facteurApproximation = _configuration.FacteurApproximation
-    var Armure = 0
-    var Speed: Float = 0
-    var DoitBouger = false
-    var IsAttacking = false
-    var up = false
-    var down = false
-    var left = false
-    var right = false
-    var Mort = false
-    var Force: Int = 3
-    protected var _coolDownFrappe = 1000
+    private val _configuration = _modele.Configuration
+    private val _facteurApproximation = _configuration.FacteurApproximation
+    private var _mort = false
     private var _enCoursAction = false
-    var Destination: (Float, Float) = null
 
-    def Regarde(): Vision = {
-        _modele.DonneVision(Nom)    // Permet de renseigner l'IA
-    }
-
-    def Frappe(nom: String, quantite:Int) {
+    private def _frappe(nom: String, quantite:Int) {
         if (_enCoursAction) return
         _modele.Frappe(nom, quantite)
     }
-
-    def appliqueDirection(direction: (Int, Int)) {
+    private def _appliqueDirection(direction: (Int, Int)) {
         val position = Geometry.getWorldTranslation
         val x = position.getX/2.0f
         val z = position.getZ/2.0f
 
-        println("   Je vais en (" + direction._1 + ":" + direction._2 + ")")
-
-        if      (direction._1 < 0 || x >= _configuration.Cote)   down=true
-
-        else if (direction._1 > 0 || x <= 0)                    up=true
-
-        if      (direction._2 < 0 || z >= _configuration.Cote)   left=true
-
-        else if (direction._2 > 0 || z <= 0)                    right=true
-
-
-        println("       up      down    left    right")
-        println("       " + up + "\t" + down + "\t" + left + "\t" + right +"\n")
+        if      (direction._1 < 0 || x >= _configuration.Cote)   Down=true
+        else if (direction._1 > 0 || x <= 0)                    Up=true
+        if      (direction._2 < 0 || z >= _configuration.Cote)   Left=true
+        else if (direction._2 > 0 || z <= 0)                    Right=true
 
         Destination = ((x + direction._1).round, (z + direction._2).round)
         _enCoursAction = true
     }
-    def Priorite(point: (Int, Int)): List[(Int, Int)] = {
+    private def _priorite(point: (Int, Int)): List[(Int, Int)] = {
         // Priorité des choix de direction façon automate
         // A B C
         // D   F
@@ -111,8 +59,48 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
         else
             List(I, H, F, G, C, D, B, A)   // Point I
     }
+    private def _playDeath() {
+        _modele.PlayMyDeath(Nom)
+    }
+    private def _verifiFinAction() {
+        val position = Geometry.getWorldTranslation
+        val x = position.getX /2.0f
+        val z = position.getZ /2.0f
 
-    /** Réfléchi si doit se déplacer ou frapper */
+        if (Destination == null) return
+        if (Destination._1 <= x + _facteurApproximation
+            && Destination._1 >= x - _facteurApproximation ) {
+            Up=false
+            Down=false
+        }
+
+        if (Destination._2 <= z + _facteurApproximation
+            && Destination._2 >= z - _facteurApproximation ) {
+            Left = false
+            Right = false
+        }
+        if (!Up && !Down && !Right && !Left) {
+            _enCoursAction = false
+            Destination = null
+        }
+    }
+
+    protected var _coolDownFrappe = 1000
+
+    var Armure = 0
+    var Speed: Float = 0
+    var Force: Int = 3
+
+    // Interface Ui
+    var Up = false
+    var Down = false
+    var Left = false
+    var Right = false
+
+    // Interface IA
+    def Regarde(): Vision = {
+        _modele.DonneVision(Nom)    // Permet de renseigner l'IA
+    }
     def Attaque(Nom: String, point: (Int, Int)) {
         if (_enCoursAction) return
 
@@ -125,7 +113,7 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
         val zDelta = (zAttaquant - positionEni.getZ).toInt //TODO: pkoi passer par vector3f
 
         def ReflechiOuAller(xDelta:Int, zDelta:Int, choixPossible: Array[Array[Boolean]]):
-            List[(Int, Int)] = {
+        List[(Int, Int)] = {
             def DirectionPrincipale(): (Int, Int) = {
                 var x = 0
                 var z = 0
@@ -140,11 +128,11 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
 
                 (x, z)
             }
-            Priorite(DirectionPrincipale())
+            _priorite(DirectionPrincipale())
         }
 
         if (Math.abs(xDelta) < 2 && Math.abs(zDelta) < 2) {
-            Frappe(Nom, Force)
+            _frappe(Nom, Force)
         }
         else {
             val choixPossible = Array.ofDim[Boolean](3, 3)
@@ -156,7 +144,7 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
             val ordreChoix = ReflechiOuAller(xDelta, zDelta, choixPossible)
             for (choix <- ordreChoix) {
                 if (!presenceWall(choix._1 + 1)(choix._2 + 1)) {
-                    appliqueDirection(choix)
+                    _appliqueDirection(choix)
                     return
                 }
             }
@@ -169,52 +157,50 @@ class Personnage (Geometry: Geometry, _modele: Modele, val Nom: String)
         val xAttaquant = positionAttaquant.getX/2.0f
         val zAttaquant = positionAttaquant.getZ/2.0f
 
-        println(Nom + " :")
-        println("   Je suis en (" + xAttaquant + " : " + zAttaquant + ")")
-
         val choixPossible = Array.ofDim[Boolean](3, 3)
         val presenceWall = _modele.Autour((xAttaquant.toInt, zAttaquant.toInt))
 
-        println("   Autour de moi :")
-        for (i <- (0 to 2).reverse) {
-            print("     ")
-            for (j <- 0 to 2) {
-                // On retire les murs des choix possibles
-                val presence = presenceWall(i)(j)
-                if (presence) print("X ")
-                else          print("- ")
-                choixPossible(i)(j) = !presence
-            }
-            println()
+        //        for (i <- (0 to 2).reverse) {
+        //            for (j <- 0 to 2) {
+        //                // On retire les murs des choix possibles
+        //                val presence = presenceWall(i)(j)
+        //                choixPossible(i)(j) = !presence
+        //            }
+        //        }
+
+        for (i <- 0 to 2 ; j <- 0 to 2) {
+            // On retire les murs des choix possibles
+            choixPossible(i)(j) = !presenceWall(i)(j)
         }
 
-        //        for (i <- 0 to 2 ; j <- 0 to 2) {
-//            // On retire les murs des choix possibles
-//            choixPossible(i)(j) = !presenceWall(i)(j)
-//        }
-
-        val ordreChoix = Priorite(util.Random.nextInt(2) -1, util.Random.nextInt(2) -1)
+        val ordreChoix = _priorite(util.Random.nextInt(2) -1, util.Random.nextInt(2) -1)
         for (choix <- ordreChoix) {
             if (!presenceWall(choix._1 + 1)(choix._2 + 1)) {
-                appliqueDirection(choix)
+                _appliqueDirection(choix)
                 return
             }
         }
     }
+    def EnCoursAction(): Boolean = {
+        _verifiFinAction()
+        _enCoursAction
+    }
+    
+    // Interface GestionnaireEntite
     def MovePhysic(){
         Geometry.addControl(Control)
     }
+
+    // Interface Modele
+    var Destination: (Float, Float) = null
     def RecoitFrappe(quantite: Int) {
         val degat = quantite - Armure
         if (degat > 0) {
             PointVie -= quantite
             if (PointVie <= 0) {
-                Mort = true
-                PlayDeath()
+                _mort = true
+                _playDeath()
             }
         }
-    }
-    def PlayDeath() {
-        _modele.PlayMyDeath(Nom)
     }
 }

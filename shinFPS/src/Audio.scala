@@ -23,7 +23,4 @@ class Audio (AssetManager: AssetManager, rootNode: Node) {
     def PlayBang() {
         _bang.playInstance()
     }
-
-
-
 }

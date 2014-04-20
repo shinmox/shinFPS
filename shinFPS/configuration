@@ -1,16 +1,9 @@
 Configuration
 
-GroundName Shinny_Rock
-RockStartName Rock
-CoeurName CoeurDuDonjon
-MinionStartName mob
-PlayerName Player
-
 Cote 20
 HauteurMurs 2.0
-HauteurSol 0.0
 MinionGold 3
-MinionDeathTime 5
+MinionDeathTime 3
 CoutMur 3
 
 // IA
@@ -28,7 +21,4 @@ MinionBigLife 5
 FacteurApproximation 0.15
 
 // Player
-PlayerX 0.5
-PlayerY 1
-PlayerZ 0.5
 PlayerDegats 2

@@ -12,8 +12,8 @@ import javax.naming.ldap.Control
 class Modele {
     var GameType: String = "STR"
     val Configuration = new Configuration
-    val HauteurSol = Configuration.HauteurSol
-    val HauteurMurs = Configuration.HauteurSol
+    //val HauteurSol = Configuration.HauteurSol
+    //val HauteurMurs = Configuration.HauteurSol
     private var _jeuEnCours = true
 
     // Tir
@@ -22,17 +22,14 @@ class Modele {
 
     // Entites
     val AirDeJeu = new AirDeJeu(Configuration)
+    var Player: Player = null
     private val _gestionnaireEntites: GestionnaireEntite = new GestionnaireEntite(Configuration)
     private val _IA = new IA(_gestionnaireEntites.Entites, Configuration)
-    private var nextPopTime: Long = Configuration.FirstPopTime
-    private var nextIATime: Long = Configuration.IATime
+    private var _nextPopTime: Long = Configuration.FirstPopTime
+    private var _nextIATime: Long = Configuration.IATime
     private var _ui: Ui = null
-    var Player: Player = null
 
-    def AddObserver(ui: Ui) {
-        _ui = ui
-    }
-
+    // INITIALISATION
     def Init() {
         def InitPhysics() {
             _ui.InitPhysics()
@@ -95,8 +92,8 @@ class Modele {
             _ui.InitAudio()
         }
 
-        nextPopTime += System.currentTimeMillis()
-        nextIATime += System.currentTimeMillis()
+        _nextPopTime += System.currentTimeMillis()
+        _nextIATime += System.currentTimeMillis()
 
         InitPhysics()
         InitKeys()
@@ -111,6 +108,58 @@ class Modele {
         
         _jeuEnCours = true
     }
+    def AddObserver(ui: Ui) {
+        _ui = ui
+    }
+
+    // MECANISMES DE JEU
+    def SimpleUpdate() {
+        if (_jeuEnCours) {
+            def TestEntiteMove() {
+                for (personnage <- _gestionnaireEntites.Entites.values)
+                    if (personnage.Destination != null)
+                        _ui.Move(personnage)
+            }
+
+            if (CurrentTime >= _nextIATime) {
+                _nextIATime += Configuration.IATime
+
+                def TestPopMob() {
+                    if (CurrentTime >= _nextPopTime && _gestionnaireEntites.CompteurMob < 5) {
+                        _nextPopTime += 10000
+
+                        //TODO: Incohérence entre _walls dans l'ui et entites dans le modele ... => gestion différente de deux objets similaires
+                        val point = AirDeJeu.PositionApparitionMinions
+                        val nom = _gestionnaireEntites.AjouterMob(_ui.getAssetManager, point, this)
+                        val geometry = _gestionnaireEntites.Entites(nom).Geometry
+                        _gestionnaireEntites.AddPhysics(nom, _ui.BulletAppState)
+                        Shootables.attachChild(geometry)
+                    }
+                }
+                TestPopMob()
+                _IA.SimpleUpdate()
+            }
+            TestEntiteMove()
+        }
+    }
+    def GiveText(): String = {
+        var text = ""
+        if (_gestionnaireEntites.Entites.contains(Configuration.CoeurName)) {
+            text += _gestionnaireEntites.Entites(Configuration.CoeurName).PointVie + "\n"
+        }
+        else
+            text += "0\n"
+
+        text += _gestionnaireEntites.CompteurMob + "\n\n"
+        text += Player.Gold + "\n"
+        text += Player.PointVie + "\n"
+        //        text += "(" + (Player.Geometry.getWorldTranslation.getX /2.0f).toString.substring(0,3) +
+        //            "," + (Player.Geometry.getWorldTranslation.getY /2.0f).toString.substring(0,3) +
+        //            "," + (Player.Geometry.getWorldTranslation.getZ /2.0f).toString.substring(0,3) + ")\n"
+        text
+    }
+
+    // STR - FPS
     def SwitchGamePlay() {
         if (GameType == "STR") {
             _ui.SwitchFps()
@@ -119,6 +168,31 @@ class Modele {
             _ui.SwitchStr()
         }
     }
+
+    // STR
+    def CreateMur(x: Int, z: Int) {
+        val coutMur = Configuration.CoutMur
+        if (Player.Gold < coutMur) return
+        Player.Gold -= coutMur
+
+        _ui.AjouteMur(x, z)
+    }
+    def RemoveMur(x: Int, z: Int) {
+        AirDeJeu.RemoveMur(x, z)
+        if (util.Random.nextInt(10) > 6)
+            Player.Gold += 1
+    }
+
+    // FPS
+    def ShootAt(nom: String) {
+        if (_gestionnaireEntites.Entites.contains(nom))
+            _gestionnaireEntites.Entites(nom).RecoitFrappe(Player.Degats)
+    }
+    def KillPlayer() {
+        Player.PointVie = 15
+    }
+
+    // IA
     def DonneVision(nom: String): Vision = {
         //TODO: Certainement la fonction ralentissant le plus l'IA
         val vision = new Vision(Configuration.Cote)
@@ -205,72 +279,14 @@ class Modele {
         }
         vision
     }
-    def CurrentTime = System.currentTimeMillis
-
-    def SimpleUpdate() {
-        if (_jeuEnCours) {
-            def TestEntiteMove() {
-                for (personnage <- _gestionnaireEntites.Entites.values)
-                    if (personnage.Destination != null)
-                        _ui.Move(personnage)
-            }
-
-            if (CurrentTime >= nextIATime) {
-                nextIATime += Configuration.IATime
-
-                def TestPopMob() {
-                    if (CurrentTime >= nextPopTime && _gestionnaireEntites.CompteurMob < 5) {
-                        nextPopTime += 10000
-
-                        //TODO: Incohérence entre _walls dans l'ui et entites dans le modele ... => gestion différente de deux objets similaires
-                        val point = AirDeJeu.PositionApparitionMinions
-                        val nom = _gestionnaireEntites.AjouterMob(_ui.getAssetManager, point, this)
-                        val geometry = _gestionnaireEntites.Entites(nom).Geometry
-                        _gestionnaireEntites.AddPhysics(nom, _ui.BulletAppState)
-                        Shootables.attachChild(geometry)
-                    }
-                }
-                TestPopMob()
-                _IA.SimpleUpdate()
-            }
-            TestEntiteMove()
-        }
-    }
-    def RemoveMur(x: Int, z: Int) {
-        AirDeJeu.RemoveMur(x, z)
-        if (util.Random.nextInt(10) > 6)
-            Player.Gold += 1
-    }
-
-    def Frappe(nom: String, quantite:Int) {
-        _gestionnaireEntites.Entites(nom).RecoitFrappe(quantite)
-    }
-
-    def Move(personnage: Personnage) {
-        _gestionnaireEntites.MovePhysics(personnage.Nom)
-    }
-
     def Autour(point: (Int, Int)): Array[Array[Boolean]] = {
         _ui.GiveWallAutour(point)
     }
-    def VerifieNoWall(point: (Int, Int)): Boolean = {
-        _ui.VerifieNoWall(point)
+    def Frappe(nom: String, quantite:Int) {
+        _gestionnaireEntites.Entites(nom).RecoitFrappe(quantite)
     }
-    def GiveText(): String = {
-        var text = ""
-        if (_gestionnaireEntites.Entites.contains(Configuration.CoeurName)) {
-            text += _gestionnaireEntites.Entites(Configuration.CoeurName).PointVie + "\n"
-        }
-        else
-            text += "0\n"
-
-        text += _gestionnaireEntites.CompteurMob + "\n\n"
-        text += Player.Gold + "\n"
-        text += Player.PointVie + "\n"
-        text += "(" + (Player.Geometry.getWorldTranslation.getX /2.0f).toString.substring(0,3) +
-            "," + (Player.Geometry.getWorldTranslation.getY /2.0f).toString.substring(0,3) +
-            "," + (Player.Geometry.getWorldTranslation.getZ /2.0f).toString.substring(0,3) + ")\n"
-        text
+    def Move(personnage: Personnage) {
+        _gestionnaireEntites.MovePhysics(personnage.Nom)
     }
     def PlayMyDeath(nom: String) {
         val lieu = _gestionnaireEntites.Entites(nom).Geometry.getWorldTranslation
@@ -290,18 +306,10 @@ class Modele {
             _ui.PLayPlayerDeath()
         }
     }
-    def ShootAt(nom: String) {
-        if (_gestionnaireEntites.Entites.contains(nom))
-            _gestionnaireEntites.Entites(nom).RecoitFrappe(Player.Degats)
-    }
-    def KillPlayer() {
-        Player.PointVie = 15
-    }
-    def CreateMur(x: Int, z: Int) {
-        val coutMur = Configuration.CoutMur
-        if (Player.Gold < coutMur) return
-        Player.Gold -= coutMur
+//    def VerifieNoWall(point: (Int, Int)): Boolean = {
+//        _ui.VerifieNoWall(point)
+//    }
 
-        _ui.AjouteMur(x, z)
-    }
+    // HELPER
+    def CurrentTime = System.currentTimeMillis
 }

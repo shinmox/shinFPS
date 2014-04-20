@@ -22,49 +22,51 @@ import scala.collection.mutable
  * Created by shinmox on 01/04/14.
  */
 class Ui(_modele: Modele) extends SimpleApplication {
-    val _configuration = _modele.Configuration
+    private val _configuration = _modele.Configuration
     private val _cote = _configuration.Cote
-    var BulletAppState: BulletAppState = null
     private val _walls = new Walls(_configuration)
-    private var ground: Geometry = null
-    private var playerCC: CharacterControl = null
-    private var curseur: Geometry = null
-    private var couleurCurseurRouge: Material = null
-    private var couleurCurseurVert: Material = null
-    private var crossHair: BitmapText = null
+    private var _ground: Geometry = null
+
+    // Joueur
+    private var _playerCC: CharacterControl = null
+    private val _walkDirection = new Vector3f
+
+    // Curseur
+    private var _curseur: Geometry = null
+    private var _couleurCurseurRouge: Material = null
+    private var _couleurCurseurVert: Material = null
+    private var _crossHair: BitmapText = null
+    private var _autorisationCreuser = false
+    private var _compteurCurseur = false
+
+    // Affichage
     private var _textZone: BitmapText = null
     private var _textZone2: BitmapText = null
-    private var autorisationCreuser = false
-    private var compteurCurseur = false
-    private var totalTime: Long = System.currentTimeMillis
-    private val walkDirection = new Vector3f
+
+    // Mecanisme jeu
+    private var _totalTime: Long = System.currentTimeMillis
+    private var _lastFrame: Long = _modCurrentTime
+    private val _hauteurMurs = _configuration.HauteurMurs
+    private val _hauteurSol = _configuration.HauteurSol
+
+    // Effects
     private var _coeurDeath: ParticleEmitter = null
     private var _minionDeaths: Array[ParticleEmitter] = null
     private var _minionDeathSuivante: Int = 0
     private var _deathsTimer = mutable.Map[Int, Float]()
-    private var lastFrame: Long = modCurrentTime
 
-    // Raccourcis
-    private val _hauteurMurs = _configuration.HauteurMurs
-    private val _hauteurSol = _configuration.HauteurSol
-
-    def modCurrentTime = _modele.CurrentTime
-    def modShootables = _modele.Shootables
-    def modGameType = _modele.GameType
-    def _modAirDeJeu = _modele.AirDeJeu
-
-    // Adaptation MVC
-    def InputManager = inputManager
-    def AssetManager = assetManager
-    def FlyCam = flyCam
+    // Accès Modele
+    private def _modCurrentTime = _modele.CurrentTime
+    private def _modShootables = _modele.Shootables
+    private def _modGameType = _modele.GameType
 
     // Contrôles
-    private var left = false
-    private var right = false
-    private var up = false
-    private var down = false
-    private var run = false
-    private var crushed = false
+    private var _left = false
+    private var _right = false
+    private var _up = false
+    private var _down = false
+    private var _run = false
+    private var _crushed = false
 
     // Audio
     private var _audio: Audio = null
@@ -75,39 +77,39 @@ class Ui(_modele: Modele) extends SimpleApplication {
     override def simpleUpdate(tpf: Float) {
         def testCurseur() {
             //TODO: Code coloration curseur parait fragile
-            if (curseur.getWorldTranslation.getX < 0
-                    || curseur.getWorldTranslation.getZ < 0
-                    || curseur.getWorldTranslation.getX >= _cote * 2
-                    || curseur.getWorldTranslation.getZ >= _cote * 2) {
-                autorisationCreuser = false
-                curseur.setMaterial(couleurCurseurRouge)
+            if (_curseur.getWorldTranslation.getX < 0
+                    || _curseur.getWorldTranslation.getZ < 0
+                    || _curseur.getWorldTranslation.getX >= _cote * 2
+                    || _curseur.getWorldTranslation.getZ >= _cote * 2) {
+                _autorisationCreuser = false
+                _curseur.setMaterial(_couleurCurseurRouge)
             }
             else {
-                autorisationCreuser = true
-                if (compteurCurseur && _modele.CurrentTime - totalTime >= 0) {
-                    compteurCurseur = false
-                    curseur.setMaterial(couleurCurseurVert)
+                _autorisationCreuser = true
+                if (_compteurCurseur && _modele.CurrentTime - _totalTime >= 0) {
+                    _compteurCurseur = false
+                    _curseur.setMaterial(_couleurCurseurVert)
                 }
-                if (!compteurCurseur)
-                    curseur.setMaterial(couleurCurseurVert)
+                if (!_compteurCurseur)
+                    _curseur.setMaterial(_couleurCurseurVert)
             }
         }
         def actionFps() {
             //if (!left && !right && !up && !down) return // pas de mouvement
 
             var vitesse = 0.12f
-            if (run) vitesse *= 2
+            if (_run) vitesse *= 2
             val camDir: Vector3f = cam.getDirection.clone().multLocal(vitesse)
             val camLeft: Vector3f = cam.getLeft.clone().multLocal(0.08f)
 
-            walkDirection.set(0, 0, 0)
-            if (left)  walkDirection.addLocal(camLeft)
-            if (right) walkDirection.addLocal(camLeft.negate())
-            if (up)    walkDirection.addLocal(camDir)
-            if (down)  walkDirection.addLocal(camDir.negate())
-            playerCC.setWalkDirection(walkDirection)
+            _walkDirection.set(0, 0, 0)
+            if (_left)  _walkDirection.addLocal(camLeft)
+            if (_right) _walkDirection.addLocal(camLeft.negate())
+            if (_up)    _walkDirection.addLocal(camDir)
+            if (_down)  _walkDirection.addLocal(camDir.negate())
+            _playerCC.setWalkDirection(_walkDirection)
 
-            val position = playerCC.getPhysicsLocation
+            val position = _playerCC.getPhysicsLocation
             cam.setLocation(position)
             _modele.Player.Geometry.setLocalTranslation(position)
         }
@@ -115,10 +117,10 @@ class Ui(_modele: Modele) extends SimpleApplication {
             //if (!left && !right && !up && !down) return // pas de mouvement
 
             val camDir: Vector3f = cam.getDirection.normalize().mult(0.5f)
-            if (left) cam.setLocation(cam.getLocation.add(camDir.getZ, 0, -camDir.getX))
-            if (right) cam.setLocation(cam.getLocation.add(-camDir.getZ, 0, camDir.getX))
-            if (up) cam.setLocation(cam.getLocation.add(camDir.getX, 0, camDir.getZ))
-            if (down) cam.setLocation(cam.getLocation.add(-camDir.getX, 0, -camDir.getZ))
+            if (_left) cam.setLocation(cam.getLocation.add(camDir.getZ, 0, -camDir.getX))
+            if (_right) cam.setLocation(cam.getLocation.add(-camDir.getZ, 0, camDir.getX))
+            if (_up) cam.setLocation(cam.getLocation.add(camDir.getX, 0, camDir.getZ))
+            if (_down) cam.setLocation(cam.getLocation.add(-camDir.getX, 0, -camDir.getZ))
         }
         def VerifieText() {
             _textZone2.setText(_modele.GiveText())
@@ -135,9 +137,9 @@ class Ui(_modele: Modele) extends SimpleApplication {
         }
 
         // Controle de calcul par secondes limité à 60/sec
-        val currentTime = modCurrentTime
-        if (currentTime - lastFrame < 16.6f) return
-        else lastFrame = currentTime
+        val currentTime = _modCurrentTime
+        if (currentTime - _lastFrame < 16.6f) return
+        else _lastFrame = currentTime
 
         // Sorte de controlleur
         testCurseur()
@@ -150,6 +152,8 @@ class Ui(_modele: Modele) extends SimpleApplication {
         VerifieDeathTimers()
     }
 
+    // Interface Modele
+    // Interface Modele => Initialisation
     def InitPhysics() {
         BulletAppState = new BulletAppState()
         stateManager.attach(BulletAppState)
@@ -211,7 +215,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
         def IncrusteWall(mur: Geometry) {
             TangentBinormalGenerator.generate(mur)
             mur.setMaterial(material)
-            modShootables.attachChild(mur)
+            _modShootables.attachChild(mur)
         }
 
         val murs: Array[Geometry] = Array(
@@ -240,15 +244,15 @@ class Ui(_modele: Modele) extends SimpleApplication {
 
         val cote = _cote + 2
         val box = new Box(cote, 1f, cote)
-        ground = new Geometry(_configuration.GroundName, box)
-        TangentBinormalGenerator.generate(ground) // for lighting effect
-        ground.setMaterial(mat)
-        modShootables.attachChild(ground)
-        ground.move(cote -3, -1, cote -3)
+        _ground = new Geometry(_configuration.GroundName, box)
+        TangentBinormalGenerator.generate(_ground) // for lighting effect
+        _ground.setMaterial(mat)
+        _modShootables.attachChild(_ground)
+        _ground.move(cote -3, -1, cote -3)
 
-        val sceneShape: CollisionShape = CollisionShapeFactory.createMeshShape(ground)
+        val sceneShape: CollisionShape = CollisionShapeFactory.createMeshShape(_ground)
         val landscape = new RigidBodyControl(sceneShape, 0)
-        ground.addControl(landscape)
+        _ground.addControl(landscape)
         BulletAppState.getPhysicsSpace.add(landscape)
     }
     def InitLight() {
@@ -272,7 +276,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
         eclairages.foreach((eclairage _).tupled)
     }
     def InitWorld() {
-        rootNode.attachChild(modShootables)
+        rootNode.attachChild(_modShootables)
     }
     def InitEntite(entites: GestionnaireEntite, nom: String, point: (Int, Float, Int)) {
         val geometry = entites.Entites(nom).Geometry
@@ -280,7 +284,7 @@ class Ui(_modele: Modele) extends SimpleApplication {
                       (point._2 + geometry.getLocalScale.getY) *2,
                       point._3 *2 )
         entites.AddPhysics(nom, BulletAppState)
-        modShootables.attachChild(geometry)
+        _modShootables.attachChild(geometry)
     }
     def InitCam() {
         cam.setLocation(new Vector3f(-6, 20, -6))
@@ -288,42 +292,42 @@ class Ui(_modele: Modele) extends SimpleApplication {
     }
     def InitCurseur() {
         def InitCouleurs() {
-            couleurCurseurVert = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
-            couleurCurseurVert.setColor("Color", new ColorRGBA(0, 1, 0, 0.5f))
-            couleurCurseurVert.getAdditionalRenderState.setBlendMode(BlendMode.Alpha)
+            _couleurCurseurVert = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+            _couleurCurseurVert.setColor("Color", new ColorRGBA(0, 1, 0, 0.5f))
+            _couleurCurseurVert.getAdditionalRenderState.setBlendMode(BlendMode.Alpha)
 
-            couleurCurseurRouge = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
-            couleurCurseurRouge.setColor("Color", new ColorRGBA(1, 0, 0, 0.5f))
-            couleurCurseurRouge.getAdditionalRenderState.setBlendMode(BlendMode.Alpha)
+            _couleurCurseurRouge = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+            _couleurCurseurRouge.setColor("Color", new ColorRGBA(1, 0, 0, 0.5f))
+            _couleurCurseurRouge.getAdditionalRenderState.setBlendMode(BlendMode.Alpha)
         }
 
         InitCouleurs()
 
         val hauteurCurseur = 0.1f
         val box = new Box(1, hauteurCurseur, 1)
-        curseur = new Geometry("Box", box)
-        curseur.setMaterial(couleurCurseurVert)
-        curseur.setQueueBucket(Bucket.Transparent)
-        rootNode.attachChild(curseur)
-        curseur.move(0, _hauteurSol + _hauteurMurs*2 + hauteurCurseur *2, 0)
+        _curseur = new Geometry("Box", box)
+        _curseur.setMaterial(_couleurCurseurVert)
+        _curseur.setQueueBucket(Bucket.Transparent)
+        rootNode.attachChild(_curseur)
+        _curseur.move(0, _hauteurSol + _hauteurMurs*2 + hauteurCurseur *2, 0)
     }
     def InitCrossHair() {
         //guiNode.detachAllChildren()
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt")
-        crossHair = new BitmapText(guiFont, false)
-        crossHair.setSize(guiFont.getCharSet.getRenderedSize * 2)
-        crossHair.setText("+")         // crosshairs
-        crossHair.setLocalTranslation( // center
+        _crossHair = new BitmapText(guiFont, false)
+        _crossHair.setSize(guiFont.getCharSet.getRenderedSize * 2)
+        _crossHair.setText("+")         // crosshairs
+        _crossHair.setLocalTranslation( // center
             settings.getWidth / 2 - guiFont.getCharSet.getRenderedSize / 3 * 2,
-            settings.getHeight / 2 + crossHair.getLineHeight / 2, 0)
+            settings.getHeight / 2 + _crossHair.getLineHeight / 2, 0)
     }
     def InitPlayer() {
         val capsuleShape = new CapsuleCollisionShape(_configuration.PlayerX, _configuration.PlayerY, 1)
-        playerCC = new CharacterControl(capsuleShape, 0.05f)
-        playerCC.setJumpSpeed(0)
-        playerCC.setFallSpeed(0)
-        playerCC.setGravity(0)
-        BulletAppState.getPhysicsSpace.add(playerCC)
+        _playerCC = new CharacterControl(capsuleShape, 0.05f)
+        _playerCC.setJumpSpeed(0)
+        _playerCC.setFallSpeed(0)
+        _playerCC.setGravity(0)
+        BulletAppState.getPhysicsSpace.add(_playerCC)
     }
     def InitKeys() {
         flyCam.setMoveSpeed(0)
@@ -377,251 +381,6 @@ class Ui(_modele: Modele) extends SimpleApplication {
     def InitAudio() {
         _audio = new Audio(assetManager, rootNode)
     }
-
-
-    private val actionListener = new ActionListener {
-        def launchCompteurCurseur() {
-            compteurCurseur = true
-            totalTime = modCurrentTime + 100
-        }
-        def onAction(name: String, keyPressed: Boolean, tpf: Float) {
-            if (modGameType == "STR") {
-                //TODO: Empecher le curseur de sortir du l'aire de jeu
-                if (name.equals("Z") && !keyPressed) {
-                    val vecteurCamera = cam.getDirection.normalize
-                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
-                        if (vecteurCamera.getX >= 0)
-                            curseur.move(2, 0, 0)
-                        else
-                            curseur.move(-2, 0, 0)
-                    }
-                    else {
-                        if (vecteurCamera.getZ >= 0)
-                            curseur.move(0, 0, 2)
-                        else
-                            curseur.move(0, 0, -2)
-                    }
-                }
-                else if (name.equals("S") && !keyPressed) {
-                    val vecteurCamera = cam.getDirection.normalize
-                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
-                        if (vecteurCamera.getX >= 0)
-                            curseur.move(-2, 0, 0)
-                        else
-                            curseur.move(2, 0, 0)
-                    }
-                    else {
-                        if (vecteurCamera.getZ >= 0)
-                            curseur.move(0, 0, -2)
-                        else
-                            curseur.move(0, 0,  2)
-                    }
-                }
-                if (name.equals("Q") && !keyPressed) {
-                    val vecteurCamera = cam.getDirection.normalize
-                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
-                        if (vecteurCamera.getX >= 0)
-                            curseur.move(0, 0, -2)
-                        else
-                            curseur.move(0, 0, 2)
-                    }
-                    else {
-                        if (vecteurCamera.getZ >= 0)
-                            curseur.move(2, 0, 0)
-                        else
-                            curseur.move(-2, 0, 0)
-                    }
-
-                }
-                else if (name.equals("D") && !keyPressed) {
-                    val vecteurCamera = cam.getDirection.normalize
-                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
-                        if (vecteurCamera.getX >= 0)
-                            curseur.move(0, 0, 2)
-                        else
-                            curseur.move(0, 0, -2)
-                    }
-                    else {
-                        if (vecteurCamera.getZ >= 0)
-                            curseur.move(-2, 0, 0)
-                        else
-                            curseur.move(2, 0, 0)
-                    }
-                }
-                if (name.equals("Up")) {
-                    up = keyPressed
-                }
-                else if (name.equals("Down")) {
-                    down = keyPressed
-                }
-                if (name.equals("Left")) {
-                    left = keyPressed
-                }
-                else if (name.equals("Right")) {
-                    right = keyPressed
-                }
-                if (name.equals("Space") && !keyPressed && autorisationCreuser) {
-                    curseur.setMaterial(couleurCurseurRouge)
-                    launchCompteurCurseur()
-
-                    val x = (curseur.getWorldTranslation.getX/2).toInt
-                    val z = (curseur.getWorldTranslation.getZ/2).toInt
-
-                    if (_walls.Disable(x, z))
-                        _modele.RemoveMur(x, z)
-                    _audio.PlayBang()
-                }
-                if (name.equals("Return") && !keyPressed) {
-                    _modele.SwitchGamePlay()
-                }
-                if (name.equals("A") && !keyPressed) {
-                    val x = (curseur.getWorldTranslation.getX/2).toInt
-                    val z = (curseur.getWorldTranslation.getZ/2).toInt
-
-                    if (!_walls.Existe(x, z)) {
-                        _modele.CreateMur(x, z)
-                        _audio.PlayBang()
-                    }
-                }
-            }
-            else if (_modele.GameType == "FPS") {
-                if (name.equals("Z")) {
-                    up = keyPressed
-                }
-                else if (name.equals("S")) {
-                    down = keyPressed
-                }
-                if (name.equals("Q")) {
-                    left = keyPressed
-                }
-                else if (name.equals("D")) {
-                    right = keyPressed
-                }
-                if (name.equals("Space")) { playerCC.jump() }
-                if (name.equals("LShift")) { run = keyPressed }
-                if (name.equals("LControl")) { crushed = keyPressed }   // TODO: S'accroupir ne fonctionne pas
-                if (name.equals("LClick") && !keyPressed) {
-                    _audio.PlayGun()
-                    val results = new CollisionResults                      // 1. Reset results list.
-                    val ray = new Ray(cam.getLocation, cam.getDirection)    // 2. Aim the ray from cam loc to cam direction.
-                    modShootables.collideWith(ray, results)                 // 3. Collect intersections between Ray
-                                                                            //    and Shootables in results list.
-                    if (results.size() > 1) {                               // 4. Use the results (we mark the hit object)
-                        val closest: CollisionResult = results.getCollision(1)
-                        if(closest.getGeometry.getName.substring(0, 3) == _configuration.MinionStartName)
-                            _modele.ShootAt(closest.getGeometry.getName)
-                        else
-                            _modele.Marks.GiveResults(closest.getContactPoint)
-                    }
-                }
-                if (name.equals("Return") && !keyPressed) {
-                    _modele.SwitchGamePlay()
-                }
-            }
-        }
-    }
-    def SwitchFps() {
-        def InitPlayer() {
-            val position = new Vector3f(
-                curseur.getWorldTranslation.getX,
-                curseur.getWorldTranslation.getY,
-                curseur.getWorldTranslation.getZ )
-            cam.setLocation(position)
-            cam.lookAt(new Vector3f(1, 0, 0), new Vector3f(0, 1, 0))
-            playerCC.setPhysicsLocation(position)
-
-            playerCC.setJumpSpeed(10)
-            playerCC.setFallSpeed(30)
-            playerCC.setGravity(30)
-
-            modShootables.attachChild(_modele.Player.Geometry)
-        }
-        def Pointeur() {
-            guiNode.attachChild(crossHair)
-            curseur.removeFromParent()
-        }
-        def ModifKeys() {
-            flyCam.setDragToRotate(false)
-        }
-        def ChangeGameType() {
-            _modele.GameType = "FPS"
-        }
-
-        ChangeGameType()
-        InitPlayer()
-        Pointeur()
-        ModifKeys()
-    }
-    def SwitchStr() {
-        def Pointeur() {
-            crossHair.removeFromParent()
-            rootNode.attachChild(curseur)
-        }
-        def InitPlayer() {
-            cam.setLocation(new Vector3f(-6, 20, -6))
-            cam.lookAt(new Vector3f(10, 0, 10), new Vector3f(0, 1, 0))
-            playerCC.setJumpSpeed(20)
-            playerCC.setFallSpeed(30)
-            playerCC.setGravity(30)
-            _modele.Player.Geometry.removeFromParent()
-            up=false ; down=false ; left=false ; right=false
-
-        }
-        def ModifKeys() {
-            flyCam.setDragToRotate(true)
-        }
-        def ChangeGameType() {
-            _modele.GameType = "STR"
-        }
-        ChangeGameType()
-        InitPlayer()
-        Pointeur()
-        ModifKeys()
-    }
-
-    def Affiche(mark: Geometry) {
-        rootNode.attachChild(mark)
-    }
-    def Move(personnage: Personnage) {
-        if (personnage.left) {
-            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0, 0, -0.1f * personnage.Speed))
-            _modele.Move(personnage)
-        }
-        if (personnage.right) {
-            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0, 0, 0.1f * personnage.Speed))
-            _modele.Move(personnage)
-        }
-        if (personnage.up) {
-            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0.1f, 0, 0 * personnage.Speed))
-            _modele.Move(personnage)
-        }
-        if (personnage.down) {
-            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(-0.1f, 0, 0 * personnage.Speed))
-            _modele.Move(personnage)
-        }
-    }
-    def GiveWallAutour(point: (Int, Int)): Array[Array[Boolean]] = {
-        val autour = Array.ofDim[Boolean](3, 3)
-        val x = point._1
-        val z = point._2
-        for (i <- -1 to +1 ; j <- -1 to +1) {
-            if (x + i < 0
-                || z + j < 0
-                || x + i >= _cote
-                || z + j >= _cote ) {
-                autour(i+1)(j+1) = true
-            }
-            else if (_walls.Existe(x+i, z+j)) {
-                autour(i+1)(j+1) = true
-            }
-            else
-                autour(i+1)(j+1) = false
-        }
-        autour
-    }
-    def VerifieNoWall(point: (Int, Int)): Boolean = {
-        _walls.Existe(point._1, point._2)
-    }
     def InitCoeurDeath() {
         _coeurDeath = new ParticleEmitter("Emitter", ParticleMesh.Type.Triangle, 30)
         val mat_red = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md")
@@ -661,31 +420,207 @@ class Ui(_modele: Modele) extends SimpleApplication {
         }
         _minionDeathSuivante = 0
     }
-    def PlayCoeurDeath(lieu: Vector3f) {
-        _coeurDeath.setLocalTranslation(lieu)
-        rootNode.attachChild(_coeurDeath)
+    var BulletAppState: BulletAppState = null
 
-        val text = new BitmapText(guiFont, false)
-        text.setSize(guiFont.getCharSet.getRenderedSize * 3)
-        text.setColor(ColorRGBA.Red)
-        text.setText("Le coeur est détruit.\nVous avez perdu")
-        text.setLocalTranslation( // center
-            settings.getWidth / 2 - text.getLineWidth/2,
-            settings.getHeight / 2 + crossHair.getLineHeight / 2, 0)
+    // Interface Modele => Mecanisme de jeu
+    private val actionListener = new ActionListener {
+        def launchCompteurCurseur() {
+            _compteurCurseur = true
+            _totalTime = _modCurrentTime + 100
+        }
+        def onAction(name: String, keyPressed: Boolean, tpf: Float) {
+            if (_modGameType == "STR") {
+                //TODO: Empecher le curseur de sortir du l'aire de jeu
+                if (name.equals("Z") && !keyPressed) {
+                    val vecteurCamera = cam.getDirection.normalize
+                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
+                        if (vecteurCamera.getX >= 0)
+                            _curseur.move(2, 0, 0)
+                        else
+                            _curseur.move(-2, 0, 0)
+                    }
+                    else {
+                        if (vecteurCamera.getZ >= 0)
+                            _curseur.move(0, 0, 2)
+                        else
+                            _curseur.move(0, 0, -2)
+                    }
+                }
+                else if (name.equals("S") && !keyPressed) {
+                    val vecteurCamera = cam.getDirection.normalize
+                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
+                        if (vecteurCamera.getX >= 0)
+                            _curseur.move(-2, 0, 0)
+                        else
+                            _curseur.move(2, 0, 0)
+                    }
+                    else {
+                        if (vecteurCamera.getZ >= 0)
+                            _curseur.move(0, 0, -2)
+                        else
+                            _curseur.move(0, 0,  2)
+                    }
+                }
+                if (name.equals("Q") && !keyPressed) {
+                    val vecteurCamera = cam.getDirection.normalize
+                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
+                        if (vecteurCamera.getX >= 0)
+                            _curseur.move(0, 0, -2)
+                        else
+                            _curseur.move(0, 0, 2)
+                    }
+                    else {
+                        if (vecteurCamera.getZ >= 0)
+                            _curseur.move(2, 0, 0)
+                        else
+                            _curseur.move(-2, 0, 0)
+                    }
 
-        guiNode.attachChild(text)
+                }
+                else if (name.equals("D") && !keyPressed) {
+                    val vecteurCamera = cam.getDirection.normalize
+                    if (Math.abs(vecteurCamera.getX) >= Math.abs(vecteurCamera.getZ)) {
+                        if (vecteurCamera.getX >= 0)
+                            _curseur.move(0, 0, 2)
+                        else
+                            _curseur.move(0, 0, -2)
+                    }
+                    else {
+                        if (vecteurCamera.getZ >= 0)
+                            _curseur.move(-2, 0, 0)
+                        else
+                            _curseur.move(2, 0, 0)
+                    }
+                }
+                if (name.equals("Up")) {
+                    _up = keyPressed
+                }
+                else if (name.equals("Down")) {
+                    _down = keyPressed
+                }
+                if (name.equals("Left")) {
+                    _left = keyPressed
+                }
+                else if (name.equals("Right")) {
+                    _right = keyPressed
+                }
+                if (name.equals("Space") && !keyPressed && _autorisationCreuser) {
+                    _curseur.setMaterial(_couleurCurseurRouge)
+                    launchCompteurCurseur()
+
+                    val x = (_curseur.getWorldTranslation.getX/2).toInt
+                    val z = (_curseur.getWorldTranslation.getZ/2).toInt
+
+                    if (_walls.Disable(x, z))
+                        _modele.RemoveMur(x, z)
+                    _audio.PlayBang()
+                }
+                if (name.equals("Return") && !keyPressed) {
+                    _modele.SwitchGamePlay()
+                }
+                if (name.equals("A") && !keyPressed) {
+                    val x = (_curseur.getWorldTranslation.getX/2).toInt
+                    val z = (_curseur.getWorldTranslation.getZ/2).toInt
+
+                    if (!_walls.Existe(x, z)) {
+                        _modele.CreateMur(x, z)
+                        _audio.PlayBang()
+                    }
+                }
+            }
+            else if (_modele.GameType == "FPS") {
+                if (name.equals("Z")) {
+                    _up = keyPressed
+                }
+                else if (name.equals("S")) {
+                    _down = keyPressed
+                }
+                if (name.equals("Q")) {
+                    _left = keyPressed
+                }
+                else if (name.equals("D")) {
+                    _right = keyPressed
+                }
+                if (name.equals("Space")) { _playerCC.jump() }
+                if (name.equals("LShift")) { _run = keyPressed }
+                if (name.equals("LControl")) { _crushed = keyPressed }   // TODO: S'accroupir ne fonctionne pas
+                if (name.equals("LClick") && !keyPressed) {
+                    _audio.PlayGun()
+                    val results = new CollisionResults                      // 1. Reset results list.
+                    val ray = new Ray(cam.getLocation, cam.getDirection)    // 2. Aim the ray from cam loc to cam direction.
+                    _modShootables.collideWith(ray, results)                 // 3. Collect intersections between Ray
+                                                                            //    and Shootables in results list.
+                    if (results.size() > 1) {                               // 4. Use the results (we mark the hit object)
+                        val closest: CollisionResult = results.getCollision(1)
+                        if(closest.getGeometry.getName.substring(0, 3) == _configuration.MinionStartName)
+                            _modele.ShootAt(closest.getGeometry.getName)
+                        else
+                            _modele.Marks.GiveResults(closest.getContactPoint)
+                    }
+                }
+                if (name.equals("Return") && !keyPressed) {
+                    _modele.SwitchGamePlay()
+                }
+            }
+        }
     }
-    def PlayMinionDeath(lieu: Vector3f) {
-        _minionDeaths(_minionDeathSuivante).setLocalTranslation(lieu)
-        rootNode.attachChild(_minionDeaths(_minionDeathSuivante))
-        _deathsTimer(_minionDeathSuivante) = _configuration.MinionDeathTime
+    def SwitchFps() {
+        def InitPlayer() {
+            val position = new Vector3f(
+                _curseur.getWorldTranslation.getX,
+                _curseur.getWorldTranslation.getY,
+                _curseur.getWorldTranslation.getZ )
+            cam.setLocation(position)
+            cam.lookAt(new Vector3f(1, 0, 0), new Vector3f(0, 1, 0))
+            _playerCC.setPhysicsLocation(position)
 
-        _minionDeathSuivante += 1
+            _playerCC.setJumpSpeed(10)
+            _playerCC.setFallSpeed(30)
+            _playerCC.setGravity(30)
+
+            _modShootables.attachChild(_modele.Player.Geometry)
+        }
+        def Pointeur() {
+            guiNode.attachChild(_crossHair)
+            _curseur.removeFromParent()
+        }
+        def ModifKeys() {
+            flyCam.setDragToRotate(false)
+        }
+        def ChangeGameType() {
+            _modele.GameType = "FPS"
+        }
+
+        ChangeGameType()
+        InitPlayer()
+        Pointeur()
+        ModifKeys()
     }
-    def PlayerPosition = cam.getLocation
-    def PLayPlayerDeath() {
-        _modele.KillPlayer()
-        SwitchStr()
+    def SwitchStr() {
+        def Pointeur() {
+            _crossHair.removeFromParent()
+            rootNode.attachChild(_curseur)
+        }
+        def InitPlayer() {
+            cam.setLocation(new Vector3f(-6, 20, -6))
+            cam.lookAt(new Vector3f(10, 0, 10), new Vector3f(0, 1, 0))
+            _playerCC.setJumpSpeed(20)
+            _playerCC.setFallSpeed(30)
+            _playerCC.setGravity(30)
+            _modele.Player.Geometry.removeFromParent()
+            _up=false ; _down=false ; _left=false ; _right=false
+
+        }
+        def ModifKeys() {
+            flyCam.setDragToRotate(true)
+        }
+        def ChangeGameType() {
+            _modele.GameType = "STR"
+        }
+        ChangeGameType()
+        InitPlayer()
+        Pointeur()
+        ModifKeys()
     }
     def AjouteMur(x: Int, z: Int) {
         //TODO: Code proche d'InitBlocks
@@ -713,5 +648,75 @@ class Ui(_modele: Modele) extends SimpleApplication {
         _modele.Shootables.attachChild(geometry)
 
         _walls.Enable(x, z, geometry, control)
+    }
+
+    // Interface Modele => Entite/IA
+    def Move(personnage: Personnage) {
+        if (personnage.Left) {
+            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0, 0, -0.1f * personnage.Speed))
+            _modele.Move(personnage)
+        }
+        if (personnage.Right) {
+            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0, 0, 0.1f * personnage.Speed))
+            _modele.Move(personnage)
+        }
+        if (personnage.Up) {
+            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(0.1f, 0, 0 * personnage.Speed))
+            _modele.Move(personnage)
+        }
+        if (personnage.Down) {
+            personnage.Geometry.setLocalTranslation(personnage.Geometry.getLocalTranslation.add(-0.1f, 0, 0 * personnage.Speed))
+            _modele.Move(personnage)
+        }
+    }
+    def GiveWallAutour(point: (Int, Int)): Array[Array[Boolean]] = {
+        val autour = Array.ofDim[Boolean](3, 3)
+        val x = point._1
+        val z = point._2
+        for (i <- -1 to +1 ; j <- -1 to +1) {
+            if (x + i < 0
+                || z + j < 0
+                || x + i >= _cote
+                || z + j >= _cote ) {
+                autour(i+1)(j+1) = true
+            }
+            else if (_walls.Existe(x+i, z+j)) {
+                autour(i+1)(j+1) = true
+            }
+            else
+                autour(i+1)(j+1) = false
+        }
+        autour
+    }
+    def PlayCoeurDeath(lieu: Vector3f) {
+        _coeurDeath.setLocalTranslation(lieu)
+        rootNode.attachChild(_coeurDeath)
+
+        val text = new BitmapText(guiFont, false)
+        text.setSize(guiFont.getCharSet.getRenderedSize * 3)
+        text.setColor(ColorRGBA.Red)
+        text.setText("Le coeur est détruit.\nVous avez perdu")
+        text.setLocalTranslation( // center
+            settings.getWidth / 2 - text.getLineWidth/2,
+            settings.getHeight / 2 + _crossHair.getLineHeight / 2, 0)
+
+        guiNode.attachChild(text)
+    }
+    def PlayMinionDeath(lieu: Vector3f) {
+        _minionDeaths(_minionDeathSuivante).setLocalTranslation(lieu)
+        rootNode.attachChild(_minionDeaths(_minionDeathSuivante))
+        _deathsTimer(_minionDeathSuivante) = _configuration.MinionDeathTime
+
+        _minionDeathSuivante += 1
+    }
+    def PLayPlayerDeath() {
+        _modele.KillPlayer()
+        SwitchStr()
+    }
+    def PlayerPosition = cam.getLocation
+
+    // Interface Marker
+    def Affiche(mark: Geometry) {
+        rootNode.attachChild(mark)
     }
 }
