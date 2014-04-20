@@ -37,7 +37,7 @@ class Configuration {
 
     // mise à jour des valeurs par défaut depuis un fichier de configuration
     println(System.getProperty("user.dir"))
-    val lines = scala.io.Source.fromFile("configuration")
+    val lines = scala.io.Source.fromFile("configuration.cfg")
     for (line <- lines.getLines()) {
         val words = line.split(" ")
 
